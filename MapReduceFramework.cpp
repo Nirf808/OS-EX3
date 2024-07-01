@@ -24,6 +24,21 @@ struct ReduceContext
     pthread_mutex_t *reduceMutex;
 };
 
+typedef struct ThreadContext
+{
+    int job_id;
+    int thread_id;
+    const MapReduceClient *client;
+    const InputVec *inputVec;
+    std::atomic<int> *atomic_counter;
+    std::atomic<int> *progress;
+    Barrier *barrier;
+    std::vector<IntermediatePair> *threads_vector;
+    std::vector<IntermediateVec> *shuffle_vector;
+    ReduceContext *reduceContext;
+    int threads_amount;
+} ThreadContext;
+
 struct Job
 {
     bool is_finished;
@@ -40,25 +55,11 @@ struct Job
     Barrier *barrier;
     std::atomic<int> *atomic_counter;
     JobHandle job_handle;
+    ThreadContext *threadContexts;
 };
 
 int num_jobs = 0;
 std::map<int, Job *> jobs;
-
-struct ThreadContext
-{
-    const int job_id;
-    const int thread_id;
-    const MapReduceClient &client;
-    const InputVec &inputVec;
-    std::atomic<int> *atomic_counter;
-    std::atomic<int> *progress;
-    Barrier *barrier;
-    std::vector<IntermediatePair> *threads_vector;
-    std::vector<IntermediateVec> *shuffle_vector;
-    ReduceContext *reduceContext;
-    int threads_amount;
-};
 
 bool
 pairComparator (const std::pair<K2 *, V2 *> a, const std::pair<K2 *, V2 *> b)
@@ -103,9 +104,10 @@ thread_wrapper (
   std::vector<std::pair<K2 *, V2 *>> *vector = tc->threads_vector
       + tc->thread_id;
   int old_value = (*(tc->atomic_counter))++;
-  while (old_value < tc->inputVec.size ())
+  while (old_value < tc->inputVec->size ())
     {
-      tc->client.map (tc->inputVec[old_value].first, tc->inputVec[old_value]
+      tc->client->map (tc->inputVec->at(old_value).first,
+                      tc->inputVec->at(old_value)
           .second, vector);
       old_value = (*(tc->atomic_counter))++;
       (*(tc->progress))++;
@@ -126,7 +128,7 @@ thread_wrapper (
   while (old_value >= 0)
     {
       const IntermediateVec reduce_param = (*(tc->shuffle_vector))[old_value];
-      tc->client.reduce (&reduce_param, tc->reduceContext);
+      tc->client->reduce (&reduce_param, tc->reduceContext);
       old_value = (*(tc->atomic_counter))--;
       (*(tc->progress))++;
     }
@@ -149,7 +151,8 @@ void waitForJob (JobHandle job)
 void closeJobHandle (JobHandle job)
 {
   waitForJob (job);
-  Job *job_to_close = jobs[*(int *) job];
+  int job_id = *(int *) job;
+  Job *job_to_close = jobs[job_id];
   delete(job_to_close->progress);
   delete[](job_to_close->threads);
   delete(job_to_close->reduceMutex);
@@ -158,6 +161,7 @@ void closeJobHandle (JobHandle job)
   delete[](job_to_close->threads_vectors);
   delete(job_to_close->barrier);
   delete(job_to_close->atomic_counter);
+  delete[](job_to_close->threadContexts);
   delete((int *)(job_to_close->job_handle));
 
   job_to_close->progress = nullptr;
@@ -169,8 +173,9 @@ void closeJobHandle (JobHandle job)
   job_to_close->barrier = nullptr;
   job_to_close->atomic_counter = nullptr;
   job_to_close->job_handle = nullptr;
+  job_to_close->threadContexts = nullptr;
   delete(job_to_close);
-  jobs[*(int *) job] = nullptr;
+  jobs[job_id] = nullptr;
 }
 
 bool checkEqualityK2 (K2 *k1, K2 *k2)
@@ -293,6 +298,7 @@ JobHandle startMapReduceJob (const MapReduceClient &client,
   auto *barrier = new Barrier (multiThreadLevel);
   auto *atomic_counter = new std::atomic<int> (0);
   auto *threads = new pthread_t [multiThreadLevel];
+//  auto *threadContexts = new ThreadContext[multiThreadLevel];
 
   JobHandle job_handle = new int (job_id);
 
@@ -305,12 +311,16 @@ JobHandle startMapReduceJob (const MapReduceClient &client,
   jobs[job_id]->barrier = barrier;
   jobs[job_id]->atomic_counter = atomic_counter;
   jobs[job_id]->job_handle = job_handle;
+  jobs[job_id]->threadContexts = new ThreadContext [multiThreadLevel];
+
+
 
   for (int i = 0; i < multiThreadLevel; i++) {
-      auto *thread_context = new ThreadContext{ job_id, i, client, inputVec,
+      jobs[job_id]->threadContexts[i] = ThreadContext{ job_id, i, &client, &inputVec,
           atomic_counter, progress, barrier, threads_vectors, shuffle_vector,
           reduce_context, multiThreadLevel};
-      pthread_create (threads + i, nullptr, thread_wrapper, thread_context);
+      pthread_create (threads + i, nullptr, thread_wrapper, jobs[job_id]->threadContexts
+      + i);
     }
 
   jobs[job_id]->threads = threads;
