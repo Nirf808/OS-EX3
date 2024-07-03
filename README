@@ -4,4 +4,4 @@ Exercise 3 - MapReduce - Multi-threaded Programming
 README: a file containing the students names and ids
 MapReduceFramework.cpp: The framework will support running a MapReduce.
 Barrier.cpp: A multiple use barrier
-Makefile: fill in
+Makefile: *fill me*

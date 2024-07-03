@@ -155,39 +155,53 @@ void waitForJob (JobHandle job)
     }
 }
 
+/*
+ * Responsible for free all resources that were allocated for the given job id.
+ */
+void free_job_resources(int job_id) {
+    Job *job_to_close = jobs[job_id];
+    pthread_mutex_destroy(job_to_close->reduceMutex);
+    pthread_mutex_destroy(job_to_close->state_mutex);
+    delete(job_to_close->progress);
+    delete[](job_to_close->threads);
+    delete(job_to_close->reduceMutex);
+    delete(job_to_close->reduce_context);
+    delete(job_to_close->shuffle_vector);
+    delete[](job_to_close->threads_vectors);
+    delete(job_to_close->barrier);
+    delete(job_to_close->atomic_counter);
+    delete[](job_to_close->threadContexts);
+    delete(job_to_close->state_mutex);
+    delete((int *)(job_to_close->job_handle));
+
+    job_to_close->progress = nullptr;
+    job_to_close->threads = nullptr;
+    job_to_close->reduceMutex = nullptr;
+    job_to_close->reduce_context = nullptr;
+    job_to_close->shuffle_vector = nullptr;
+    job_to_close->threads_vectors = nullptr;
+    job_to_close->barrier = nullptr;
+    job_to_close->atomic_counter = nullptr;
+    job_to_close->job_handle = nullptr;
+    job_to_close->threadContexts = nullptr;
+    job_to_close->state_mutex = nullptr;
+    delete(job_to_close);
+    jobs[job_id] = nullptr;
+
+    // TODO: destroy things
+}
+
+void free_all_jobs_resources() {
+    for (auto it = jobs.begin(); it != jobs.end(); ++it) {
+        free_job_resources(it->first);
+    }
+}
+
 void closeJobHandle (JobHandle job)
 {
-  waitForJob (job);
-  int job_id = *(int *) job;
-  Job *job_to_close = jobs[job_id];
-  delete(job_to_close->progress);
-  delete[](job_to_close->threads);
-  delete(job_to_close->reduceMutex);
-  delete(job_to_close->reduce_context);
-  delete(job_to_close->shuffle_vector);
-  delete[](job_to_close->threads_vectors);
-  delete(job_to_close->barrier);
-  delete(job_to_close->atomic_counter);
-  delete[](job_to_close->threadContexts);
-  delete(job_to_close->state_mutex);
-  delete((int *)(job_to_close->job_handle));
-
-  job_to_close->progress = nullptr;
-  job_to_close->threads = nullptr;
-  job_to_close->reduceMutex = nullptr;
-  job_to_close->reduce_context = nullptr;
-  job_to_close->shuffle_vector = nullptr;
-  job_to_close->threads_vectors = nullptr;
-  job_to_close->barrier = nullptr;
-  job_to_close->atomic_counter = nullptr;
-  job_to_close->job_handle = nullptr;
-  job_to_close->threadContexts = nullptr;
-  job_to_close->state_mutex = nullptr;
-  delete(job_to_close);
-  jobs[job_id] = nullptr;
-
-  // TODO: destroy things
-
+    waitForJob (job);
+    int job_id = *(int *) job;
+    free_job_resources(job_id);
 }
 
 bool checkEqualityK2 (K2 *k1, K2 *k2)
@@ -260,12 +274,14 @@ void emit3 (K3 *key, V3 *value, void *context)
   if (pthread_mutex_lock (reduceMutex) != 0)
     {
       fprintf (stderr, LOCK_ERR_MSG);
+      free_all_jobs_resources();
       exit (1);
     }
   reduceContext->outputVec.push_back (pair);
   if (pthread_mutex_unlock (reduceMutex) != 0)
     {
       fprintf (stderr, "[[Barrier]] error on pthread_mutex_unlock");
+      free_all_jobs_resources();
       exit (1);
     }
 }
@@ -280,11 +296,6 @@ void getJobState (JobHandle job, JobState *state)
   Job *currentJob = jobs[*jobInt];
   pthread_mutex_lock(currentJob->state_mutex);
   state->stage = currentJob->stage;
-//  float progress_value = (float) currentJob->progress->load ();
-//  if (progress_value) {
-//      std::cerr << "system error: failed in creating a thread\n";
-//      exit(1);
-//    }
   state->percentage = ((float) currentJob->progress->load () / (float)
   currentJob->stage_size) * 100;
   pthread_mutex_unlock(currentJob->state_mutex);
@@ -319,7 +330,6 @@ JobHandle startMapReduceJob (const MapReduceClient &client,
   auto *barrier = new Barrier (multiThreadLevel);
   auto *atomic_counter = new std::atomic<int> (0);
   auto *threads = new pthread_t [multiThreadLevel];
-//  auto *threadContexts = new ThreadContext[multiThreadLevel];
 
   JobHandle job_handle = new int (job_id);
 
@@ -342,7 +352,8 @@ JobHandle startMapReduceJob (const MapReduceClient &client,
       if ((pthread_create (threads + i, nullptr, thread_wrapper,
                         jobs[job_id]->threadContexts + i) != 0)) {
         std::cout << "system error: failed in creating a thread\n";
-          exit(1);
+        free_all_jobs_resources();
+        exit(1);
       }
     }
 
