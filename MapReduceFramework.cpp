@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <map>
 #include <unistd.h>
+#include <iostream>
 
 /**************************************
  *             CONSTANTS              *
@@ -176,6 +177,9 @@ void closeJobHandle (JobHandle job)
   job_to_close->threadContexts = nullptr;
   delete(job_to_close);
   jobs[job_id] = nullptr;
+
+  // TODO: destroy things
+
 }
 
 bool checkEqualityK2 (K2 *k1, K2 *k2)
@@ -267,6 +271,11 @@ void getJobState (JobHandle job, JobState *state)
   int *jobInt = (int *) job;
   Job *currentJob = jobs[*jobInt];
   state->stage = currentJob->stage;
+//  float progress_value = (float) currentJob->progress->load ();
+//  if (progress_value) {
+//      std::cerr << "system error: failed in creating a thread\n";
+//      exit(1);
+//    }
   state->percentage = ((float) currentJob->progress->load () / (float)
       currentJob->stage_size) * 100;
 }
@@ -319,8 +328,11 @@ JobHandle startMapReduceJob (const MapReduceClient &client,
       jobs[job_id]->threadContexts[i] = ThreadContext{ job_id, i, &client, &inputVec,
           atomic_counter, progress, barrier, threads_vectors, shuffle_vector,
           reduce_context, multiThreadLevel};
-      pthread_create (threads + i, nullptr, thread_wrapper, jobs[job_id]->threadContexts
-      + i);
+      if ((pthread_create (threads + i, nullptr, thread_wrapper,
+                        jobs[job_id]->threadContexts + i) != 0)) {
+        std::cerr << "system error: failed in creating a thread\n";
+          exit(1);
+      }
     }
 
   jobs[job_id]->threads = threads;
