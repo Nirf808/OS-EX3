@@ -38,6 +38,7 @@ typedef struct ThreadContext
     std::vector<IntermediateVec> *shuffle_vector;
     ReduceContext *reduceContext;
     int threads_amount;
+    pthread_mutex_t *state_mutex;
 } ThreadContext;
 
 struct Job
@@ -57,6 +58,7 @@ struct Job
     std::atomic<int> *atomic_counter;
     JobHandle job_handle;
     ThreadContext *threadContexts;
+    pthread_mutex_t *state_mutex;
 };
 
 int num_jobs = 0;
@@ -78,22 +80,26 @@ void reduceVectorBuilder (
 
 void shuffle_stage (ThreadContext *tc)
 {
-  tc->atomic_counter->store (-1);
-  tc->progress->store (0);
-  size_t total_size = 0;
-  for (int i = 0; i < tc->threads_amount; i++)
+    tc->atomic_counter->store (-1);
+    size_t total_size = 0;
+    for (int i = 0; i < tc->threads_amount; i++)
     {
-      total_size += tc->threads_vector[i].size ();
+        total_size += tc->threads_vector[i].size ();
     }
-  jobs[tc->job_id]->stage = SHUFFLE_STAGE;
-  jobs[tc->job_id]->stage_size = total_size;
+    pthread_mutex_lock(tc->state_mutex);
+    tc->progress->store (0);
+    jobs[tc->job_id]->stage = SHUFFLE_STAGE;
+    jobs[tc->job_id]->stage_size = total_size;
+    pthread_mutex_unlock(tc->state_mutex);
 
-  reduceVectorBuilder (total_size, tc->threads_vector, tc->shuffle_vector, tc->threads_amount,
+    reduceVectorBuilder (total_size, tc->threads_vector, tc->shuffle_vector, tc->threads_amount,
                        tc->progress, tc->atomic_counter);
 
-  tc->progress->store (0);
-  jobs[tc->job_id]->stage = REDUCE_STAGE;
-  jobs[tc->job_id]->stage_size = tc->shuffle_vector->size ();
+    pthread_mutex_lock(tc->state_mutex);
+    tc->progress->store (0);
+    jobs[tc->job_id]->stage = REDUCE_STAGE;
+    jobs[tc->job_id]->stage_size = tc->shuffle_vector->size ();
+    pthread_mutex_unlock(tc->state_mutex);
 }
 
 void *
@@ -163,6 +169,7 @@ void closeJobHandle (JobHandle job)
   delete(job_to_close->barrier);
   delete(job_to_close->atomic_counter);
   delete[](job_to_close->threadContexts);
+  delete(job_to_close->state_mutex);
   delete((int *)(job_to_close->job_handle));
 
   job_to_close->progress = nullptr;
@@ -175,6 +182,7 @@ void closeJobHandle (JobHandle job)
   job_to_close->atomic_counter = nullptr;
   job_to_close->job_handle = nullptr;
   job_to_close->threadContexts = nullptr;
+  job_to_close->state_mutex = nullptr;
   delete(job_to_close);
   jobs[job_id] = nullptr;
 
@@ -270,6 +278,7 @@ void getJobState (JobHandle job, JobState *state)
 {
   int *jobInt = (int *) job;
   Job *currentJob = jobs[*jobInt];
+  pthread_mutex_lock(currentJob->state_mutex);
   state->stage = currentJob->stage;
 //  float progress_value = (float) currentJob->progress->load ();
 //  if (progress_value) {
@@ -277,7 +286,8 @@ void getJobState (JobHandle job, JobState *state)
 //      exit(1);
 //    }
   state->percentage = ((float) currentJob->progress->load () / (float)
-      currentJob->stage_size) * 100;
+  currentJob->stage_size) * 100;
+  pthread_mutex_unlock(currentJob->state_mutex);
 }
 
 /*
@@ -297,8 +307,10 @@ JobHandle startMapReduceJob (const MapReduceClient &client,
   jobs[job_id]->progress = progress;
   auto *reduceMutex = new pthread_mutex_t ();
   pthread_mutex_init (reduceMutex, nullptr);
+  pthread_mutex_t *state_mutex = new pthread_mutex_t ();
+  pthread_mutex_init (state_mutex, nullptr);
 
-  auto *reduce_context = new ReduceContext {
+    auto *reduce_context = new ReduceContext {
       outputVec, reduceMutex
   };
 
@@ -321,16 +333,15 @@ JobHandle startMapReduceJob (const MapReduceClient &client,
   jobs[job_id]->atomic_counter = atomic_counter;
   jobs[job_id]->job_handle = job_handle;
   jobs[job_id]->threadContexts = new ThreadContext [multiThreadLevel];
-
-
+  jobs[job_id]->state_mutex = state_mutex;
 
   for (int i = 0; i < multiThreadLevel; i++) {
       jobs[job_id]->threadContexts[i] = ThreadContext{ job_id, i, &client, &inputVec,
           atomic_counter, progress, barrier, threads_vectors, shuffle_vector,
-          reduce_context, multiThreadLevel};
+          reduce_context, multiThreadLevel, state_mutex};
       if ((pthread_create (threads + i, nullptr, thread_wrapper,
                         jobs[job_id]->threadContexts + i) != 0)) {
-        std::cerr << "system error: failed in creating a thread\n";
+        std::cout << "system error: failed in creating a thread\n";
           exit(1);
       }
     }

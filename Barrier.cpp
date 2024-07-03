@@ -1,6 +1,7 @@
 #include "Barrier.h"
 #include <cstdlib>
 #include <cstdio>
+#include <iostream>
 
 Barrier::Barrier(int numThreads)
 		: mutex(PTHREAD_MUTEX_INITIALIZER)
@@ -13,11 +14,11 @@ Barrier::Barrier(int numThreads)
 Barrier::~Barrier()
 {
 	if (pthread_mutex_destroy(&mutex) != 0) {
-		fprintf(stderr, "[[Barrier]] error on pthread_mutex_destroy");
+		std::cout << "system error: [[Barrier]] error on pthread_mutex_destroy\n";
 		exit(1);
 	}
 	if (pthread_cond_destroy(&cv) != 0){
-		fprintf(stderr, "[[Barrier]] error on pthread_cond_destroy");
+		std::cout << "system error: [[Barrier]] error on pthread_cond_destroy\n";
 		exit(1);
 	}
 }
@@ -26,23 +27,23 @@ Barrier::~Barrier()
 void Barrier::barrier()
 {
 	if (pthread_mutex_lock(&mutex) != 0){
-		fprintf(stderr, "[[Barrier]] error on pthread_mutex_lock");
+		std::cout << "system error: [[Barrier]] error on pthread_mutex_lock\n";
 		exit(1);
 	}
 	if (++count < numThreads) {
 		if (pthread_cond_wait(&cv, &mutex) != 0){
-			fprintf(stderr, "[[Barrier]] error on pthread_cond_wait");
+			std::cout << "system error: [[Barrier]] error on pthread_cond_wait\n";
 			exit(1);
 		}
 	} else {
 		count = 0;
 		if (pthread_cond_broadcast(&cv) != 0) {
-			fprintf(stderr, "[[Barrier]] error on pthread_cond_broadcast");
+			std::cout << "system error: [[Barrier]] error on pthread_cond_broadcast\n";
 			exit(1);
 		}
 	}
 	if (pthread_mutex_unlock(&mutex) != 0) {
-		fprintf(stderr, "[[Barrier]] error on pthread_mutex_unlock");
+		std::cout << "system error: [[Barrier]] error on pthread_mutex_unlock\n";
 		exit(1);
 	}
 }
