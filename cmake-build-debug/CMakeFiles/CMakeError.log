@@ -1,0 +1,140 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_42703/fast"
+/usr/bin/make -f CMakeFiles/cmTC_42703.dir/build.make CMakeFiles/cmTC_42703.dir/build
+make[1]: Entering directory '/mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_42703.dir/CheckSymbolExists.c.o
+/usr/bin/x86_64-linux-gnu-gcc    -o CMakeFiles/cmTC_42703.dir/CheckSymbolExists.c.o   -c /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_42703
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_42703.dir/link.txt --verbose=1
+/usr/bin/x86_64-linux-gnu-gcc      -rdynamic CMakeFiles/cmTC_42703.dir/CheckSymbolExists.c.o  -o cmTC_42703 
+CMakeFiles/cmTC_42703.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x1b): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_42703.dir/build.make:97: recipe for target 'cmTC_42703' failed
+make[1]: *** [cmTC_42703] Error 1
+make[1]: Leaving directory '/mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_42703/fast' failed
+make: *** [cmTC_42703/fast] Error 2
+
+File /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_699e9/fast"
+/usr/bin/make -f CMakeFiles/cmTC_699e9.dir/build.make CMakeFiles/cmTC_699e9.dir/build
+make[1]: Entering directory '/mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_699e9.dir/CheckSymbolExists.c.o
+/usr/bin/x86_64-linux-gnu-gcc    -o CMakeFiles/cmTC_699e9.dir/CheckSymbolExists.c.o   -c /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_699e9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_699e9.dir/link.txt --verbose=1
+/usr/bin/x86_64-linux-gnu-gcc      -rdynamic CMakeFiles/cmTC_699e9.dir/CheckSymbolExists.c.o  -o cmTC_699e9 
+CMakeFiles/cmTC_699e9.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x1b): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_699e9.dir/build.make:97: recipe for target 'cmTC_699e9' failed
+make[1]: *** [cmTC_699e9] Error 1
+make[1]: Leaving directory '/mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_699e9/fast' failed
+make: *** [cmTC_699e9/fast] Error 2
+
+File /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_d2455/fast"
+/usr/bin/make -f CMakeFiles/cmTC_d2455.dir/build.make CMakeFiles/cmTC_d2455.dir/build
+make[1]: Entering directory '/mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d2455.dir/CheckSymbolExists.c.o
+/usr/bin/x86_64-linux-gnu-gcc    -o CMakeFiles/cmTC_d2455.dir/CheckSymbolExists.c.o   -c /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_d2455
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d2455.dir/link.txt --verbose=1
+/usr/bin/x86_64-linux-gnu-gcc      -rdynamic CMakeFiles/cmTC_d2455.dir/CheckSymbolExists.c.o  -o cmTC_d2455 
+CMakeFiles/cmTC_d2455.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x1b): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_d2455.dir/build.make:97: recipe for target 'cmTC_d2455' failed
+make[1]: *** [cmTC_d2455] Error 1
+make[1]: Leaving directory '/mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_d2455/fast' failed
+make: *** [cmTC_d2455/fast] Error 2
+
+File /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_5e934/fast"
+/usr/bin/make -f CMakeFiles/cmTC_5e934.dir/build.make CMakeFiles/cmTC_5e934.dir/build
+make[1]: Entering directory '/mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5e934.dir/CheckSymbolExists.c.o
+/usr/bin/x86_64-linux-gnu-gcc    -o CMakeFiles/cmTC_5e934.dir/CheckSymbolExists.c.o   -c /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_5e934
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5e934.dir/link.txt --verbose=1
+/usr/bin/x86_64-linux-gnu-gcc      -rdynamic CMakeFiles/cmTC_5e934.dir/CheckSymbolExists.c.o  -o cmTC_5e934 
+CMakeFiles/cmTC_5e934.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x1b): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_5e934.dir/build.make:97: recipe for target 'cmTC_5e934' failed
+make[1]: *** [cmTC_5e934] Error 1
+make[1]: Leaving directory '/mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_5e934/fast' failed
+make: *** [cmTC_5e934/fast] Error 2
+
+File /mnt/c/Users/nirfi/CLionProjects/OS-NEW/EX3/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+

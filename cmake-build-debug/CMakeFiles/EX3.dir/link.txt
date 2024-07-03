@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/EX3.dir/MapReduceFramework.cpp.o CMakeFiles/EX3.dir/test4-1_thread_4_process.cpp.o CMakeFiles/EX3.dir/Barrier.cpp.o  -o EX3 -lpthread 
