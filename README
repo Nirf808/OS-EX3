@@ -1,7 +1,7 @@
 nirf8,romytz
 Nir Finkelstein 206533564, Romy Tzafrir 208912659
 Exercise 3 - MapReduce - Multi-threaded Programming
-README: a file containing the students names and ids
 MapReduceFramework.cpp: The framework will support running a MapReduce.
-Barrier.cpp: A multiple use barrier
-Makefile: *fill me*
+Barrier.cpp: A multiple use barrier.
+Makefile: a script used to automate the compilation and build process of software, specifying how to derive target
+files from source files using rules and dependencies.

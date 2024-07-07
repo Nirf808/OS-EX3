@@ -18,13 +18,20 @@
 #define LOCK_ERR_MSG "[[Barrier]] error on pthread_mutex_lock"
 #define UNLOCK_ERR_MSG
 
-
+/*
+ * The ReduceContext struct encapsulates context information and resources needed during the reduce phase of a
+ * map-reduce computation in a multi-threaded framework.
+ */
 struct ReduceContext
 {
     OutputVec &outputVec;
     pthread_mutex_t *reduceMutex;
 };
 
+/*
+ * The ThreadContext struct encapsulates context information and resources needed by individual threads within a
+ * multi-threaded map-reduce framework.
+ */
 typedef struct ThreadContext
 {
     int job_id;
@@ -41,6 +48,10 @@ typedef struct ThreadContext
     pthread_mutex_t *state_mutex;
 } ThreadContext;
 
+/*
+ * The Job struct encapsulates various attributes and resources associated with a specific job in a multi-threaded
+ * processing framework, likely a map-reduce system.
+ */
 struct Job
 {
     bool is_finished;
@@ -64,6 +75,10 @@ struct Job
 int num_jobs = 0;
 std::map<int, Job *> jobs;
 
+/*
+ * The pairComparator function is a comparison function used to compare two std::pair objects containing pointers to
+ * keys (K2*) and values (V2*). It compares these pairs based on the values of their keys (K2*).
+ */
 bool
 pairComparator (const std::pair<K2 *, V2 *> a, const std::pair<K2 *, V2 *> b)
 {
@@ -78,6 +93,11 @@ void reduceVectorBuilder (
     std::atomic<int> *progress,
     std::atomic<int> *atomic_counter);
 
+/*
+ * The shuffle_stage function is a critical component of a map-reduce framework that organizes intermediate key-value
+ * pairs into groups with the same key. It updates the job’s progress and stage status to reflect the transition from
+ * the map phase to the reduce phase, and prepares data for the reduce phase.
+ */
 void shuffle_stage (ThreadContext *tc)
 {
     tc->atomic_counter->store (-1);
@@ -102,6 +122,11 @@ void shuffle_stage (ThreadContext *tc)
     pthread_mutex_unlock(tc->state_mutex);
 }
 
+/*
+ * The thread_wrapper function serves as an entry point for threads in a multi-threaded map-reduce framework.
+ * It handles the map, shuffle, and reduce phases for a given job, synchronizing with other threads using atomic
+ * counters and barriers to ensure orderly execution.
+ */
 void *
 thread_wrapper (
     void *arg
@@ -142,6 +167,11 @@ thread_wrapper (
   return nullptr;
 }
 
+/*
+ * The waitForJob function ensures that all threads associated with a specified job have completed their execution.
+ * It takes a job handle, retrieves the corresponding job structure, and waits for each thread to finish if the job is
+ * not already marked as finished.
+ */
 void waitForJob (JobHandle job)
 {
   Job *structJob = jobs[*(int *) job];
@@ -159,7 +189,11 @@ void waitForJob (JobHandle job)
  * Responsible for free all resources that were allocated for the given job id.
  */
 void free_job_resources(int job_id) {
+
     Job *job_to_close = jobs[job_id];
+
+    pthread_mutex_destroy(job_to_close->reduceMutex);
+    pthread_mutex_destroy(job_to_close->state_mutex);
     pthread_mutex_destroy(job_to_close->reduceMutex);
     pthread_mutex_destroy(job_to_close->state_mutex);
     delete(job_to_close->progress);
@@ -187,16 +221,24 @@ void free_job_resources(int job_id) {
     job_to_close->state_mutex = nullptr;
     delete(job_to_close);
     jobs[job_id] = nullptr;
-
-    // TODO: destroy things
 }
 
+/*
+ * The free_all_jobs_resources function iterates through a collection of jobs and frees the resources allocated for
+ * each job. This function is designed to ensure that all job-related resources are released, helping to prevent
+ * resource leaks and maintain system stability.
+ */
 void free_all_jobs_resources() {
     for (auto it = jobs.begin(); it != jobs.end(); ++it) {
         free_job_resources(it->first);
     }
 }
 
+/*
+ * The closeJobHandle function is designed to clean up resources associated with a job after its completion.
+ * It first waits for the job to finish, then retrieves the job's unique identifier, and finally, it frees any
+ * resources allocated for the job.
+ */
 void closeJobHandle (JobHandle job)
 {
     waitForJob (job);
@@ -204,11 +246,24 @@ void closeJobHandle (JobHandle job)
     free_job_resources(job_id);
 }
 
+/*
+ * The checkEqualityK2 function determines whether two keys of type K2* are equal. It leverages the "less-than"
+ * operator to compare the keys in both directions, returning true if neither key is less than the other, indicating
+ * equality.
+ */
 bool checkEqualityK2 (K2 *k1, K2 *k2)
 {
   return !(*k1 < *k2 || *k2 < *k1);
 }
 
+/*
+ * The reduceVectorBuilder function organizes and consolidates intermediate key-value pairs across multiple threads
+ * for the reduce phase in a map-reduce framework. It iterates over the total intermediate results, identifies the
+ * largest key from all thread-specific vectors, and groups all key-value pairs associated with this key into a
+ * temporary vector, which is then appended to the final results vector. This process continues until all intermediate
+ * results are processed. The function updates progress and a counter for tracking the number of consolidated key-value
+ * groups.
+ */
 void reduceVectorBuilder (
     size_t total_size,
     std::vector<IntermediatePair> *threads_vectors,
@@ -251,6 +306,13 @@ void reduceVectorBuilder (
     }
 }
 
+/*
+ * The emit2 function is designed to create an intermediate key-value pair and store it in a provided context.
+ * It takes a key of type K2*, a value of type V2*, and a context pointer, casts the context to a
+ * std::vector<IntermediatePair>*, and appends the newly created pair to this vector.
+ * This function is typically used in map-reduce frameworks to facilitate the organization and storage of intermediate
+ * results during the map phase.
+ */
 void emit2 (K2 *key, V2 *value, void *context)
 {
   IntermediatePair pair = std::pair<K2 *, V2 *> (key, value);
